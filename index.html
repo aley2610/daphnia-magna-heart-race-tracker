@@ -1,0 +1,2019 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Daphnia Magna — Kesin Kalp Takip & BPM Analizörü</title>
+<style>
+  :root {
+    --bg: #0b1120;
+    --panel: #131c31;
+    --panel-2: #0f172a;
+    --border: #263554;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --accent: #3b82f6;
+    --accent-hover: #2563eb;
+    --green: #10b981;
+    --pink: #f43f5e;
+    --amber: #f59e0b;
+    --purple: #a855f7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 16px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  main { max-width: 1220px; margin: 0 auto; }
+  header { margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+  h1 { margin: 0; font-size: 21px; letter-spacing: -0.3px; }
+  .subtitle { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+  .badge {
+    display: inline-block;
+    padding: 5px 11px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .badge-ok { background: rgba(16, 185, 129, 0.16); border-color: #10b981; color: #34d399; }
+  .badge-warn { background: rgba(245, 158, 11, 0.16); border-color: #f59e0b; color: #fbbf24; }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  button, .upload-btn {
+    border: 0;
+    border-radius: 8px;
+    padding: 9px 13px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    background: var(--accent);
+    cursor: pointer;
+    transition: background 0.15s, opacity 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  button:hover:not(:disabled), .upload-btn:hover { background: var(--accent-hover); }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-secondary { background: #334155; }
+  .btn-secondary:hover:not(:disabled) { background: #475569; }
+  .btn-green { background: #059669; }
+  .btn-green:hover:not(:disabled) { background: #047857; }
+  .btn-pink { background: #e11d48; }
+  .btn-pink:hover:not(:disabled) { background: #be123c; }
+  .btn-amber { background: #d97706; }
+  .btn-amber:hover:not(:disabled) { background: #b45309; }
+  .btn-purple { background: #7e22ce; }
+  .btn-purple:hover:not(:disabled) { background: #6b21a8; }
+  input[type="file"] { display: none; }
+
+  .settings-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    align-items: center;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .settings-row label { display: inline-flex; align-items: center; gap: 6px; }
+  .settings-row select, .settings-row input[type="number"] {
+    background: var(--panel-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 13px;
+  }
+
+  .timeline-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin-top: 10px;
+    padding: 9px 12px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+  }
+  .timeline-bar input[type="range"] { flex: 1; min-width: 170px; accent-color: var(--accent); }
+  .time-badge {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: #93c5fd;
+    min-width: 102px;
+  }
+  .mini-btn { padding: 6px 10px; font-size: 12px; }
+
+  .progress-wrap {
+    margin-top: 10px;
+    height: 6px;
+    background: var(--panel-2);
+    border-radius: 4px;
+    overflow: hidden;
+    display: none;
+  }
+  .progress-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--accent), var(--green));
+    transition: width 0.08s linear;
+  }
+
+  #status {
+    margin-top: 10px;
+    padding: 9px 12px;
+    background: var(--panel-2);
+    border-left: 3px solid var(--accent);
+    border-radius: 6px;
+    font-size: 13px;
+    color: #93c5fd;
+  }
+
+  .workspace {
+    display: grid;
+    grid-template-columns: 1fr 250px;
+    gap: 14px;
+    align-items: start;
+  }
+  @media (max-width: 860px) { .workspace { grid-template-columns: 1fr; } }
+  .stage-wrap {
+    position: relative;
+    background: #020617;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  #stage {
+    width: 100%;
+    max-height: 60vh;
+    display: block;
+    object-fit: contain;
+    cursor: crosshair;
+  }
+  .verify-hud {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(2, 6, 23, 0.85);
+    border: 1px solid var(--purple);
+    border-radius: 8px;
+    padding: 7px 12px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 14px;
+    font-weight: 700;
+    color: #fde047;
+    display: none;
+    pointer-events: none;
+  }
+
+  .side-monitor { display: flex; flex-direction: column; gap: 10px; }
+  .monitor-box {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px;
+    text-align: center;
+  }
+  .monitor-box small { display: block; color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+  #heartZoom {
+    width: 168px;
+    height: 168px;
+    background: #020617;
+    border-radius: 8px;
+    border: 2px solid var(--pink);
+    image-rendering: pixelated;
+    cursor: crosshair;
+    transition: border-color 0.06s, box-shadow 0.06s;
+  }
+  #heartZoom.flash {
+    border-color: #fde047;
+    box-shadow: 0 0 18px rgba(253, 224, 71, 0.85);
+  }
+  .legend { font-size: 12px; color: var(--muted); line-height: 1.6; text-align: left; }
+  .dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+
+  .metrics-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+    gap: 10px;
+  }
+  .metric {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+  }
+  .metric small { display: block; color: var(--muted); font-size: 12px; margin-bottom: 5px; }
+  .metric strong { font-size: 25px; font-weight: 700; }
+  .metric .sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .c-green { color: var(--green); }
+  .c-pink { color: var(--pink); }
+  .c-purple { color: #c084fc; }
+
+  .tune-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 9px 12px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+  }
+  .tune-bar label { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
+  .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; }
+  @media (max-width: 860px) { .charts-grid { grid-template-columns: 1fr; } }
+  canvas.chart {
+    width: 100%;
+    height: 205px;
+    background: var(--panel-2);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    display: block;
+    cursor: pointer;
+  }
+  #events {
+    max-height: 160px;
+    overflow-y: auto;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12px;
+    line-height: 1.65;
+    background: var(--panel-2);
+    padding: 10px 12px;
+    border-radius: 8px;
+    color: #cbd5e1;
+  }
+  h2 { margin: 0; font-size: 15px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>Daphnia magna — Kesin Kalp Takip & BPM Analizörü</h1>
+      <p class="subtitle">Çift sayım korumalı temel frekans (F0) kilidi • Kare kare sıfır kayıp • Sesli + flaşlı doğrulama</p>
+    </div>
+  </header>
+
+  <div class="panel">
+    <div class="toolbar">
+      <label class="upload-btn">
+        1. Video Yükle
+        <input id="fileInput" type="file" accept="video/*">
+      </label>
+      <button id="autoBodyBtn" class="btn-green" disabled>2. Vücudu Otomatik Bul</button>
+      <button id="manualBodyBtn" class="btn-secondary" disabled>Elle Vücut Seç</button>
+      <button id="manualHeartBtn" class="btn-pink" disabled>3. Kalbi Seç</button>
+      <button id="analyzeBtn" disabled>4. Analizi Başlat</button>
+      <button id="verifyBtn" class="btn-purple" disabled>Gözle Doğrula</button>
+      <button id="stopBtn" class="btn-amber" disabled>Durdur</button>
+      <button id="exportBtn" class="btn-secondary" disabled>CSV İndir</button>
+      <button id="resetBtn" class="btn-secondary">Sıfırla</button>
+    </div>
+
+    <div class="timeline-bar">
+      <span class="time-badge" id="curTimeText">0.00 / 0.00s</span>
+      <input id="scrubber" type="range" min="0" max="10" step="0.03" value="0" disabled>
+      <button id="setStartBtn" class="btn-secondary mini-btn" disabled>Başlangıç Yap</button>
+      <button id="setEndBtn" class="btn-secondary mini-btn" disabled>Bitiş Yap</button>
+      <label>Başl: <input id="startSec" type="number" value="0" min="0" step="0.5" style="width:64px"></label>
+      <label>Bitiş: <input id="endSec" type="number" value="10" min="0" step="0.5" style="width:64px"></label>
+    </div>
+
+    <div class="settings-row">
+      <label>
+        Kare Hızı (FPS):
+        <select id="targetFps">
+          <option value="30" selected>30 FPS (Önerilen)</option>
+          <option value="25">25 FPS</option>
+          <option value="24">24 FPS</option>
+          <option value="60">60 FPS</option>
+        </select>
+      </label>
+      <label>
+        Min BPM:
+        <input id="minBpm" type="number" value="180" min="60" max="360" style="width:66px">
+      </label>
+      <label>
+        Max BPM:
+        <input id="maxBpm" type="number" value="520" min="180" max="800" style="width:66px">
+      </label>
+      <label>
+        Doğrulama Hızı:
+        <select id="verifySpeed">
+          <option value="0.25" selected>0.25x (Yavaş)</option>
+          <option value="0.5">0.5x</option>
+          <option value="1">1.0x</option>
+        </select>
+      </label>
+      <label>
+        <input id="trackToggle" type="checkbox" checked>
+        Gövde + Dönüş Takibi
+      </label>
+      <label>
+        <input id="soundToggle" type="checkbox" checked>
+        Doğrulamada Sesli "Tik"
+      </label>
+      <label>
+        Görüntü Filtresi:
+        <select id="filterSelect">
+          <option value="none">Normal (Orijinal)</option>
+          <option value="contrast(2.4) grayscale(1)">Yüksek Kontrast (Siyah-Beyaz)</option>
+          <option value="invert(1) contrast(2.2) grayscale(1)">Negatif + Yüksek Kontrast</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+    <div id="status">Başlamak için bir mikroskop videosu yükle.</div>
+  </div>
+
+  <div class="panel">
+    <div class="workspace">
+      <div class="stage-wrap">
+        <video id="video" muted playsinline preload="auto"
+          style="position:absolute;width:1px;height:1px;opacity:0.001;pointer-events:none;"></video>
+        <canvas id="stage"></canvas>
+        <div class="verify-hud" id="verifyHud">ATIM: 0 / 0</div>
+      </div>
+
+      <div class="side-monitor">
+        <div class="monitor-box">
+          <small>Stabilize Kalp & Aktif Problar</small>
+          <canvas id="heartZoom" width="168" height="168"></canvas>
+          <div style="margin-top:8px;display:flex;gap:6px;justify-content:center;">
+            <button id="clearProbeBtn" class="btn-secondary mini-btn" disabled>Otomatik Prob</button>
+          </div>
+          <small style="margin-top:6px;font-size:11px;color:#64748b">
+            Otomatik mod kalp duvarına kilitlenir. İstersen kenara tıklayıp elle tek prob koyabilirsin.
+          </small>
+        </div>
+
+        <div class="monitor-box legend">
+          <div><span class="dot" style="background:#10b981"></span>Vücut (360° Takip)</div>
+          <div><span class="dot" style="background:#f43f5e"></span>Kalp Kutusu</div>
+          <div><span class="dot" style="background:#a855f7;border-radius:50%"></span>Temel Ritim Probları</div>
+          <div style="margin-top:6px;color:#93c5fd">Açı: <b id="angleText">0°</b> • Prob: <b id="probeModeText">Otomatik</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="metrics-head">
+      <h2>Analiz Sonuçları</h2>
+      <span id="consistencyBadge" class="badge">Henüz ölçülmedi</span>
+    </div>
+    <div class="metrics">
+      <div class="metric">
+        <small>Kesin Kalp Hızı (Temel F0)</small>
+        <strong id="bpmSpectral" class="c-green">—</strong>
+        <div class="sub" id="freqText">BPM</div>
+      </div>
+      <div class="metric">
+        <small>Atım Aralığı (Medyan)</small>
+        <strong id="bpmPeaks" class="c-pink">—</strong>
+        <div class="sub">Medyan BPM</div>
+      </div>
+      <div class="metric">
+        <small>Tespit Edilen Atım</small>
+        <strong id="beats" class="c-purple">—</strong>
+        <div class="sub" id="durationText">Süre: —</div>
+      </div>
+      <div class="metric">
+        <small>İşlenen Kare / FPS</small>
+        <strong id="fps">—</strong>
+        <div class="sub" id="framesText">0 kare</div>
+      </div>
+      <div class="metric">
+        <small>Takip / Sinyal Netliği</small>
+        <strong id="trackScore">—</strong>
+        <div class="sub" id="snrText">SNR: —</div>
+      </div>
+      <div class="metric">
+        <small>Kasılıp Gevşeme (S / D)</small>
+        <strong id="sdRatio" style="color:#38bdf8">—</strong>
+        <div class="sub" id="sdSub">Kasılma / Gevşeme</div>
+      </div>
+    </div>
+    <p id="qualityNote" style="margin:10px 0 0;font-size:13px;color:var(--muted)"></p>
+  </div>
+
+  <div class="panel">
+    <div class="tune-bar">
+      <label>
+        Atım Hassasiyeti:
+        <input id="sensSlider" type="range" min="0.10" max="0.80" step="0.02" value="0.28" disabled>
+        <b id="sensVal" style="color:#e2e8f0">0.28</b>
+      </label>
+      <button id="invertBtn" class="btn-secondary mini-btn" disabled>Yönü Ters Çevir</button>
+      <label style="cursor:pointer;">
+        <input id="editBeatsToggle" type="checkbox" disabled>
+        Grafikte Atım Ekle / Sil
+      </label>
+      <span style="font-size:12px;color:#64748b">Grafiğe tıkla → o saniyeye git</span>
+    </div>
+
+    <div class="charts-grid">
+      <div>
+        <h2>Filtrelenmiş Temel Kalp Dalgası & Atımlar</h2>
+        <canvas id="signalChart" class="chart" width="760" height="205"></canvas>
+      </div>
+      <div>
+        <h2>Frekans Spektrumu (BPM)</h2>
+        <canvas id="spectrumChart" class="chart" width="380" height="205"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2 style="margin-bottom:10px;">Tespit Edilen Atım Zamanları</h2>
+    <div id="events">Henüz analiz yapılmadı.</div>
+  </div>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+
+const video = $("video");
+const stage = $("stage");
+const ctx = stage.getContext("2d", { willReadFrequently: false });
+const heartZoom = $("heartZoom");
+const hzCtx = heartZoom.getContext("2d");
+const signalCanvas = $("signalChart");
+const sCtx = signalCanvas.getContext("2d");
+const spectrumCanvas = $("spectrumChart");
+const fCtx = spectrumCanvas.getContext("2d");
+
+const autoCanvas = document.createElement("canvas");
+const autoCtx = autoCanvas.getContext("2d", { willReadFrequently: true });
+
+const CROP_SIZE = 280;
+const cropCanvas = document.createElement("canvas");
+cropCanvas.width = CROP_SIZE;
+cropCanvas.height = CROP_SIZE;
+const cropCtx = cropCanvas.getContext("2d", { willReadFrequently: true });
+
+const PATCH_SIZE = 24;
+const roiCanvas = document.createElement("canvas");
+roiCanvas.width = PATCH_SIZE;
+roiCanvas.height = PATCH_SIZE;
+const roiCtx = roiCanvas.getContext("2d", { willReadFrequently: true });
+
+$("filterSelect").addEventListener("change", () => drawFrameAndOverlays());
+
+let audioCtx = null;
+function playTick() {
+  if (!$("soundToggle").checked) return;
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+    gain.gain.setValueAtTime(0.14, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.035);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.04);
+  } catch {}
+}
+
+let currentObjectUrl = null;
+let videoReady = false;
+let mode = "idle";
+let selectMode = null;
+let isDrawing = false;
+let drawStart = null;
+let tempRect = null;
+
+let bodyBox = null;
+let heartBox = null;
+let savedInitBody = null;
+let savedInitHeart = null;
+
+let samples = [];
+let trackGood = 0;
+let trackTotal = 0;
+let invertSign = false;
+let manualProbe = null;
+let activeProbes = [];
+let lastResult = null;
+let verifyRaf = null;
+
+function setStatus(msg, color = "#93c5fd") {
+  const el = $("status");
+  el.textContent = msg;
+  el.style.color = color;
+}
+
+function updateButtons() {
+  const busy = mode !== "idle";
+  const hasRes = !!lastResult;
+  $("autoBodyBtn").disabled = !videoReady || busy;
+  $("manualBodyBtn").disabled = !videoReady || busy;
+  $("manualHeartBtn").disabled = !videoReady || busy;
+  $("analyzeBtn").disabled = !videoReady || !heartBox || busy;
+  $("verifyBtn").disabled = !hasRes || busy;
+  $("stopBtn").disabled = !busy;
+  $("exportBtn").disabled = !hasRes || busy;
+  $("scrubber").disabled = !videoReady || busy;
+  $("setStartBtn").disabled = !videoReady || busy;
+  $("setEndBtn").disabled = !videoReady || busy;
+  $("sensSlider").disabled = !hasRes || busy;
+  $("invertBtn").disabled = !hasRes || busy;
+  $("editBeatsToggle").disabled = !hasRes || busy;
+  $("clearProbeBtn").disabled = !manualProbe || busy;
+}
+
+function updateTimeUI() {
+  const dur = video.duration || 0;
+  const cur = video.currentTime || 0;
+  $("curTimeText").textContent = `${cur.toFixed(2)} / ${dur.toFixed(2)}s`;
+  if (mode === "idle") $("scrubber").value = cur;
+}
+
+function drawRotatedBox(targetCtx, box, color, lw) {
+  targetCtx.save();
+  targetCtx.translate(box.cx, box.cy);
+  targetCtx.rotate(box.angle || 0);
+  targetCtx.strokeStyle = color;
+  targetCtx.lineWidth = lw;
+  targetCtx.strokeRect(-box.w / 2, -box.h / 2, box.w, box.h);
+  targetCtx.restore();
+}
+
+function drawStabilizedROI(targetCtx, outW, outH, box) {
+  const diag = Math.ceil(Math.hypot(box.w, box.h));
+  targetCtx.save();
+  targetCtx.clearRect(0, 0, outW, outH);
+  targetCtx.translate(outW / 2, outH / 2);
+  targetCtx.scale(outW / box.w, outH / box.h);
+  targetCtx.rotate(-(box.angle || 0));
+  targetCtx.drawImage(
+    video,
+    box.cx - diag / 2, box.cy - diag / 2, diag, diag,
+    -diag / 2, -diag / 2, diag, diag
+  );
+  targetCtx.restore();
+}
+
+function drawProbeOverlay() {
+  const scale = heartZoom.width / PATCH_SIZE;
+  hzCtx.save();
+  if (manualProbe) {
+    hzCtx.strokeStyle = "#c084fc";
+    hzCtx.fillStyle = "rgba(168, 85, 247, 0.35)";
+    hzCtx.lineWidth = 2;
+    hzCtx.beginPath();
+    hzCtx.arc(manualProbe.x * scale, manualProbe.y * scale, 2.8 * scale, 0, Math.PI * 2);
+    hzCtx.fill();
+    hzCtx.stroke();
+  } else if (activeProbes.length) {
+    activeProbes.forEach((p, idx) => {
+      hzCtx.strokeStyle = idx === 0 ? "#c084fc" : "rgba(192, 132, 252, 0.55)";
+      hzCtx.fillStyle = idx === 0 ? "rgba(168, 85, 247, 0.25)" : "rgba(168, 85, 247, 0.10)";
+      hzCtx.lineWidth = idx === 0 ? 2 : 1.2;
+      hzCtx.beginPath();
+      hzCtx.arc(p.x * scale, p.y * scale, 2.4 * scale, 0, Math.PI * 2);
+      hzCtx.fill();
+      hzCtx.stroke();
+    });
+  }
+  hzCtx.restore();
+}
+
+function drawFrameAndOverlays(isFlash = false) {
+  if (!videoReady) return;
+  const fVal = $("filterSelect") ? $("filterSelect").value : "none";
+  ctx.filter = fVal;
+  hzCtx.filter = fVal;
+  ctx.drawImage(video, 0, 0, stage.width, stage.height);
+  ctx.filter = "none";
+  const lw = Math.max(2, stage.width / 420);
+
+  if (bodyBox) {
+    drawRotatedBox(ctx, bodyBox, "#10b981", lw);
+    $("angleText").textContent = `${Math.round(((bodyBox.angle || 0) * 180) / Math.PI)}°`;
+  }
+  if (heartBox) {
+    drawRotatedBox(ctx, heartBox, isFlash ? "#fde047" : "#f43f5e", isFlash ? lw * 2 : lw);
+    drawStabilizedROI(hzCtx, heartZoom.width, heartZoom.height, heartBox);
+    drawProbeOverlay();
+  }
+  if (tempRect) {
+    ctx.strokeStyle = "#f59e0b";
+    ctx.lineWidth = lw;
+    ctx.setLineDash([6, 4]);
+    ctx.strokeRect(tempRect.x, tempRect.y, tempRect.w, tempRect.h);
+    ctx.setLineDash([]);
+  }
+}
+
+// ---------- 1. Video Yükleme ----------
+$("fileInput").addEventListener("change", e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  stopAll();
+  clearResults();
+  bodyBox = null;
+  heartBox = null;
+  savedInitBody = null;
+  savedInitHeart = null;
+  manualProbe = null;
+  videoReady = false;
+
+  if (currentObjectUrl) URL.revokeObjectURL(currentObjectUrl);
+  currentObjectUrl = URL.createObjectURL(file);
+  video.src = currentObjectUrl;
+  video.load();
+  setStatus("Video yükleniyor...");
+});
+
+function onVideoReady() {
+  if (!video.videoWidth || !video.videoHeight) return;
+  videoReady = true;
+  stage.width = video.videoWidth;
+  stage.height = video.videoHeight;
+
+  const dur = video.duration || 0;
+  $("scrubber").max = dur.toFixed(2);
+  $("startSec").max = dur.toFixed(1);
+  $("endSec").max = dur.toFixed(1);
+  $("startSec").value = 0;
+  $("endSec").value = dur.toFixed(1);
+
+  updateTimeUI();
+  drawFrameAndOverlays();
+  updateButtons();
+  setStatus(
+    `Video hazır (${video.videoWidth}x${video.videoHeight}, ${dur.toFixed(1)} sn). Önce vücudu, sonra kalbi seç.`,
+    "#6ee7b7"
+  );
+}
+
+video.addEventListener("loadedmetadata", () => {
+  if (video.duration > 0.05) video.currentTime = 0.02;
+});
+video.addEventListener("loadeddata", onVideoReady);
+video.addEventListener("canplay", () => {
+  if (!videoReady) onVideoReady();
+  else if (mode === "idle") drawFrameAndOverlays();
+});
+video.addEventListener("seeked", () => {
+  updateTimeUI();
+  if (!videoReady) onVideoReady();
+  else if (mode === "idle") drawFrameAndOverlays();
+});
+video.addEventListener("error", () => {
+  setStatus("Tarayıcı bu video formatını çözemedi. H.264 MP4 formatını dene.", "#f87171");
+});
+
+$("scrubber").addEventListener("input", e => {
+  if (!videoReady || mode !== "idle") return;
+  video.currentTime = parseFloat(e.target.value);
+});
+
+$("setStartBtn").onclick = () => {
+  const t = video.currentTime;
+  $("startSec").value = t.toFixed(2);
+  if (parseFloat($("endSec").value) <= t) {
+    $("endSec").value = Math.min(video.duration, t + 10).toFixed(2);
+  }
+  setStatus(`Başlangıç ${t.toFixed(2)} sn olarak ayarlandı.`);
+};
+
+$("setEndBtn").onclick = () => {
+  const t = video.currentTime;
+  $("endSec").value = t.toFixed(2);
+  setStatus(`Bitiş ${t.toFixed(2)} sn olarak ayarlandı.`);
+};
+
+// ---------- 2. Kutu Seçimi & Manuel Prob ----------
+function getStagePos(e) {
+  const rect = stage.getBoundingClientRect();
+  return {
+    x: (e.clientX - rect.left) * (stage.width / rect.width),
+    y: (e.clientY - rect.top) * (stage.height / rect.height)
+  };
+}
+
+$("manualBodyBtn").onclick = () => {
+  selectMode = "body";
+  setStatus("Fare ile Daphnia'nın ana gövdesini kapsayan bir dikdörtgen çiz.");
+};
+$("manualHeartBtn").onclick = () => {
+  selectMode = "heart";
+  setStatus("Fare ile kalbin üzerine kutu çiz.");
+};
+
+stage.addEventListener("pointerdown", e => {
+  if (!selectMode || mode !== "idle") return;
+  isDrawing = true;
+  drawStart = getStagePos(e);
+  tempRect = { x: drawStart.x, y: drawStart.y, w: 0, h: 0 };
+});
+
+stage.addEventListener("pointermove", e => {
+  if (!isDrawing) return;
+  const p = getStagePos(e);
+  tempRect = {
+    x: Math.min(drawStart.x, p.x),
+    y: Math.min(drawStart.y, p.y),
+    w: Math.abs(p.x - drawStart.x),
+    h: Math.abs(p.y - drawStart.y)
+  };
+  drawFrameAndOverlays();
+});
+
+window.addEventListener("pointerup", () => {
+  if (!isDrawing) return;
+  isDrawing = false;
+  if (tempRect && tempRect.w > 6 && tempRect.h > 6) {
+    const box = {
+      cx: tempRect.x + tempRect.w / 2,
+      cy: tempRect.y + tempRect.h / 2,
+      w: tempRect.w,
+      h: tempRect.h,
+      angle: 0
+    };
+    if (selectMode === "body") {
+      bodyBox = { ...box };
+      savedInitBody = { ...box };
+      $("startSec").value = video.currentTime.toFixed(2);
+      setStatus("Vücut seçildi. Şimdi '3. Kalbi Seç' ile kalbi işaretle.", "#6ee7b7");
+    } else if (selectMode === "heart") {
+      heartBox = { ...box };
+      savedInitHeart = { ...box };
+      if (!savedInitBody) $("startSec").value = video.currentTime.toFixed(2);
+      setStatus("Kalp seçildi! '4. Analizi Başlat' butonuna basabilirsin.", "#6ee7b7");
+    }
+  }
+  tempRect = null;
+  selectMode = null;
+  drawFrameAndOverlays();
+  updateButtons();
+});
+
+heartZoom.addEventListener("click", e => {
+  if (!heartBox || mode !== "idle") return;
+  const rect = heartZoom.getBoundingClientRect();
+  const px = ((e.clientX - rect.left) / rect.width) * PATCH_SIZE;
+  const py = ((e.clientY - rect.top) / rect.height) * PATCH_SIZE;
+  manualProbe = {
+    x: Math.max(2, Math.min(PATCH_SIZE - 3, px)),
+    y: Math.max(2, Math.min(PATCH_SIZE - 3, py))
+  };
+  $("probeModeText").textContent = "Elle (Duvar)";
+  drawFrameAndOverlays();
+  updateButtons();
+  if (samples.length >= 25) recomputeAndRender();
+});
+
+$("clearProbeBtn").onclick = () => {
+  manualProbe = null;
+  $("probeModeText").textContent = "Otomatik";
+  drawFrameAndOverlays();
+  updateButtons();
+  if (samples.length >= 25) recomputeAndRender();
+};
+
+function percentile(arr, p) {
+  const copy = Array.from(arr).sort((a, b) => a - b);
+  return copy[Math.min(copy.length - 1, Math.floor(copy.length * p))];
+}
+
+function median(arr) {
+  if (!arr.length) return 0;
+  const s = [...arr].sort((a, b) => a - b);
+  const m = s.length >> 1;
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+
+// ---------- 3. Otomatik Daphnia Bul ----------
+$("autoBodyBtn").onclick = () => {
+  if (!videoReady) return;
+  const scale = Math.min(1, 320 / video.videoWidth);
+  const w = Math.max(64, Math.round(video.videoWidth * scale));
+  const h = Math.max(64, Math.round(video.videoHeight * scale));
+  autoCanvas.width = w;
+  autoCanvas.height = h;
+  autoCtx.drawImage(video, 0, 0, w, h);
+  const data = autoCtx.getImageData(0, 0, w, h).data;
+  const gray = new Uint8Array(w * h);
+  const redMask = new Uint8Array(w * h);
+  for (let i = 0, p = 0; i < gray.length; i++, p += 4) {
+    const r = data[p], g = data[p + 1], b = data[p + 2];
+    gray[i] = (r * 54 + g * 183 + b * 19) >> 8;
+    if (r > 155 && r - g > 55 && r - b > 55) redMask[i] = 1;
+  }
+
+  const brightRef = percentile(gray, 0.90);
+  const fovThresh = Math.max(40, brightRef * 0.45);
+  const fovMask = new Uint8Array(w * h);
+  const fovPixels = [];
+  for (let i = 0; i < gray.length; i++) {
+    if (gray[i] >= fovThresh && !redMask[i]) {
+      fovMask[i] = 1;
+      fovPixels.push(gray[i]);
+    }
+  }
+  if (fovPixels.length < w * h * 0.05) {
+    setStatus("Otomatik bulunamadı; 'Elle Vücut Seç' kullan.", "#fbbf24");
+    return;
+  }
+
+  const bgLum = percentile(fovPixels, 0.78);
+  const fgThresh = bgLum - Math.max(16, bgLum * 0.11);
+  const fg = new Uint8Array(w * h);
+  for (let i = 0; i < gray.length; i++) {
+    if (fovMask[i] && gray[i] < fgThresh && !redMask[i]) fg[i] = 1;
+  }
+
+  const visited = new Uint8Array(w * h);
+  const queue = new Int32Array(w * h);
+  let best = null;
+  for (let y = 2; y < h - 2; y++) {
+    for (let x = 2; x < w - 2; x++) {
+      const st = y * w + x;
+      if (!fg[st] || visited[st]) continue;
+      let hd = 0, tl = 0;
+      queue[tl++] = st;
+      visited[st] = 1;
+      let minX = x, maxX = x, minY = y, maxY = y, cnt = 0;
+      while (hd < tl) {
+        const cur = queue[hd++];
+        const cx = cur % w, cy = (cur / w) | 0;
+        cnt++;
+        if (cx < minX) minX = cx;
+        if (cx > maxX) maxX = cx;
+        if (cy < minY) minY = cy;
+        if (cy > maxY) maxY = cy;
+        const nb = [cur - 1, cur + 1, cur - w, cur + w];
+        for (let k = 0; k < 4; k++) {
+          const n = nb[k];
+          if (n >= 0 && n < gray.length && fg[n] && !visited[n]) {
+            visited[n] = 1;
+            queue[tl++] = n;
+          }
+        }
+      }
+      if (cnt > 40 && (!best || cnt > best.cnt)) best = { minX, maxX, minY, maxY, cnt };
+    }
+  }
+
+  if (!best) {
+    setStatus("Daphnia bulunamadı. 'Elle Vücut Seç' kullan.", "#fbbf24");
+    return;
+  }
+
+  const box = {
+    cx: ((best.minX + best.maxX) / 2) / scale,
+    cy: ((best.minY + best.maxY) / 2) / scale,
+    w: Math.min(stage.width * 0.92, ((best.maxX - best.minX) / scale) * 1.06),
+    h: Math.min(stage.height * 0.92, ((best.maxY - best.minY) / scale) * 1.06),
+    angle: 0
+  };
+  bodyBox = { ...box };
+  savedInitBody = { ...box };
+  $("startSec").value = video.currentTime.toFixed(2);
+  drawFrameAndOverlays();
+  updateButtons();
+  setStatus("Vücut bulundu! Şimdi '3. Kalbi Seç' ile kalbi işaretle.", "#6ee7b7");
+};
+
+// ---------- 4. Yüksek Çözünürlüklü 360° Dönüş Takipçisi ----------
+class HighResRigidTracker {
+  constructor(box) {
+    this.cx = box.cx;
+    this.cy = box.cy;
+    this.angle = box.angle || 0;
+    this.vx = 0;
+    this.vy = 0;
+    this.va = 0;
+    this.scale = Math.min(1, 125 / Math.max(box.w, box.h));
+
+    const rw = Math.max(14, box.w * this.scale * 0.44);
+    const rh = Math.max(14, box.h * this.scale * 0.44);
+
+    const grid = 15;
+    const pu = [], pv = [];
+    for (let j = 0; j < grid; j++) {
+      const ny = (j / (grid - 1)) * 2 - 1;
+      for (let i = 0; i < grid; i++) {
+        const nx = (i / (grid - 1)) * 2 - 1;
+        if (nx * nx + ny * ny <= 1.0) {
+          pu.push(nx * rw);
+          pv.push(ny * rh);
+        }
+      }
+    }
+    this.u = new Float32Array(pu);
+    this.v = new Float32Array(pv);
+    this.n = this.u.length;
+    this.tpl = new Float32Array(this.n);
+    this.origTpl = new Float32Array(this.n);
+
+    const crop = this.grabCrop(this.cx, this.cy);
+    this.sampleInto(crop.gray, CROP_SIZE / 2, CROP_SIZE / 2, this.angle, this.tpl);
+    this.origTpl.set(this.tpl);
+  }
+
+  grabCrop(centerX, centerY) {
+    const srcSpan = CROP_SIZE / this.scale;
+    const ox = centerX - srcSpan / 2;
+    const oy = centerY - srcSpan / 2;
+    cropCtx.clearRect(0, 0, CROP_SIZE, CROP_SIZE);
+    cropCtx.drawImage(video, ox, oy, srcSpan, srcSpan, 0, 0, CROP_SIZE, CROP_SIZE);
+    const data = cropCtx.getImageData(0, 0, CROP_SIZE, CROP_SIZE).data;
+    const len = CROP_SIZE * CROP_SIZE;
+    const gray = new Uint8Array(len);
+    const redMask = new Uint8Array(len);
+    for (let i = 0, p = 0; i < len; i++, p += 4) {
+      const r = data[p], g = data[p + 1], b = data[p + 2];
+      gray[i] = (r * 54 + g * 183 + b * 19) >> 8;
+      if (r > 155 && r - g > 55 && r - b > 55) redMask[i] = 1;
+    }
+    return { gray, redMask, ox, oy };
+  }
+
+  sampleInto(gray, lx, ly, ang, out) {
+    const c = Math.cos(ang), s = Math.sin(ang);
+    for (let k = 0; k < this.n; k++) {
+      const px = Math.round(lx + this.u[k] * c - this.v[k] * s);
+      const py = Math.round(ly + this.u[k] * s + this.v[k] * c);
+      out[k] = (px >= 0 && px < CROP_SIZE && py >= 0 && py < CROP_SIZE) ? gray[py * CROP_SIZE + px] : -1;
+    }
+  }
+
+  scorePose(crop, lx, ly, ang, useOrig = false) {
+    const gray = crop.gray, red = crop.redMask;
+    const tpl = useOrig ? this.origTpl : this.tpl;
+    const c = Math.cos(ang), s = Math.sin(ang);
+    let cnt = 0, sT = 0, sI = 0, sTT = 0, sII = 0, sTI = 0;
+    for (let k = 0; k < this.n; k++) {
+      const tv = tpl[k];
+      if (tv < 0) continue;
+      const px = Math.round(lx + this.u[k] * c - this.v[k] * s);
+      const py = Math.round(ly + this.u[k] * s + this.v[k] * c);
+      if (px < 0 || px >= CROP_SIZE || py < 0 || py >= CROP_SIZE) continue;
+      const idx = py * CROP_SIZE + px;
+      if (red[idx]) continue;
+      const iv = gray[idx];
+      sT += tv; sI += iv; sTT += tv * tv; sII += iv * iv; sTI += tv * iv;
+      cnt++;
+    }
+    if (cnt < this.n * 0.40) return -1;
+    const num = cnt * sTI - sT * sI;
+    const dT = cnt * sTT - sT * sT;
+    const dI = cnt * sII - sI * sI;
+    if (dT <= 1 || dI <= 1) return -1;
+    return num / Math.sqrt(dT * dI);
+  }
+
+  refine(crop, bx, by, ba, bestSc, useOrig = false) {
+    const steps = [
+      { d: 4, a: 4 * Math.PI / 180 },
+      { d: 2, a: 1.5 * Math.PI / 180 },
+      { d: 1, a: 0.6 * Math.PI / 180 }
+    ];
+    for (const st of steps) {
+      let improved = true, iter = 0;
+      while (improved && iter < 6) {
+        improved = false;
+        iter++;
+        const dirs = [
+          [st.d, 0, 0], [-st.d, 0, 0],
+          [0, st.d, 0], [0, -st.d, 0],
+          [0, 0, st.a], [0, 0, -st.a],
+          [st.d, st.d, 0], [-st.d, -st.d, 0],
+          [st.d, -st.d, 0], [-st.d, st.d, 0]
+        ];
+        for (const [dx, dy, da] of dirs) {
+          const sc = this.scorePose(crop, bx + dx, by + dy, ba + da, useOrig);
+          if (sc > bestSc + 1e-5) {
+            bestSc = sc; bx += dx; by += dy; ba += da;
+            improved = true;
+          }
+        }
+      }
+    }
+    return { bx, by, ba, bestSc };
+  }
+
+  update(lostCount = 0) {
+    const predX = this.cx + (lostCount === 0 ? this.vx * 0.5 : 0);
+    const predY = this.cy + (lostCount === 0 ? this.vy * 0.5 : 0);
+    const predA = this.angle + (lostCount === 0 ? this.va * 0.5 : 0);
+
+    const crop = this.grabCrop(predX, predY);
+    const half = CROP_SIZE / 2;
+    const rad = lostCount > 0 ? 36 : 24;
+    const angMax = (lostCount > 0 ? 30 : 15) * (Math.PI / 180);
+    const angStep = 3 * (Math.PI / 180);
+
+    let bx = half, by = half, ba = predA;
+    let bestSc = this.scorePose(crop, bx, by, ba);
+
+    for (let da = -angMax; da <= angMax + 1e-5; da += angStep) {
+      const a = predA + da;
+      for (let dy = -rad; dy <= rad; dy += 4) {
+        for (let dx = -rad; dx <= rad; dx += 4) {
+          const sc = this.scorePose(crop, half + dx, half + dy, a);
+          if (sc > bestSc) { bestSc = sc; bx = half + dx; by = half + dy; ba = a; }
+        }
+      }
+    }
+
+    let r = this.refine(crop, bx, by, ba, bestSc, false);
+    bx = r.bx; by = r.by; ba = r.ba; bestSc = r.bestSc;
+
+    if (bestSc < 0.44) {
+      let rbx = half, rby = half, rba = predA, rSc = bestSc;
+      const deg15 = 15 * (Math.PI / 180);
+      for (let a = -Math.PI; a < Math.PI; a += deg15) {
+        for (let dy = -48; dy <= 48; dy += 8) {
+          for (let dx = -48; dx <= 48; dx += 8) {
+            const sc = this.scorePose(crop, half + dx, half + dy, a, true);
+            if (sc > rSc) { rSc = sc; rbx = half + dx; rby = half + dy; rba = a; }
+          }
+        }
+      }
+      if (rSc > bestSc + 0.08) {
+        const rr = this.refine(crop, rbx, rby, rba, rSc, true);
+        if (rr.bestSc > bestSc + 0.12 && rr.bestSc > 0.52) {
+          bx = rr.bx; by = rr.by; ba = rr.ba; bestSc = rr.bestSc;
+          this.tpl.set(this.origTpl);
+        }
+      }
+    }
+
+    if (bestSc < 0.40) {
+      this.vx = 0; this.vy = 0; this.va = 0;
+      return { ok: false, score: bestSc };
+    }
+
+    const sL = this.scorePose(crop, bx - 1, by, ba);
+    const sR = this.scorePose(crop, bx + 1, by, ba);
+    const dX = sL - 2 * bestSc + sR;
+    const subX = Math.abs(dX) > 1e-6 ? Math.max(-0.5, Math.min(0.5, 0.5 * (sL - sR) / dX)) : 0;
+
+    const sU = this.scorePose(crop, bx, by - 1, ba);
+    const sD = this.scorePose(crop, bx, by + 1, ba);
+    const dY = sU - 2 * bestSc + sD;
+    const subY = Math.abs(dY) > 1e-6 ? Math.max(-0.5, Math.min(0.5, 0.5 * (sU - sD) / dY)) : 0;
+
+    const newCx = crop.ox + (bx + subX) / this.scale;
+    const newCy = crop.oy + (by + subY) / this.scale;
+
+    let dAng = ba - this.angle;
+    while (dAng > Math.PI) dAng -= 2 * Math.PI;
+    while (dAng < -Math.PI) dAng += 2 * Math.PI;
+
+    if (bestSc > 0.55) {
+      this.vx = Math.max(-40, Math.min(40, newCx - this.cx));
+      this.vy = Math.max(-40, Math.min(40, newCy - this.cy));
+      this.va = Math.max(-0.40, Math.min(0.40, dAng));
+    } else {
+      this.vx = 0; this.vy = 0; this.va = 0;
+    }
+
+    this.cx = newCx;
+    this.cy = newCy;
+    this.angle = ba;
+
+    if (bestSc > 0.80) {
+      const cur = new Float32Array(this.n);
+      this.sampleInto(crop.gray, bx, by, ba, cur);
+      for (let k = 0; k < this.n; k++) {
+        if (cur[k] >= 0 && this.tpl[k] >= 0) {
+          this.tpl[k] = this.tpl[k] * 0.94 + cur[k] * 0.03 + this.origTpl[k] * 0.03;
+        }
+      }
+    }
+
+    return { ok: true, cx: this.cx, cy: this.cy, angle: this.angle, score: bestSc };
+  }
+}
+
+// ---------- 5. Kare Kare Deterministik Analiz ----------
+function readHeartGreenPatch(box) {
+  drawStabilizedROI(roiCtx, PATCH_SIZE, PATCH_SIZE, box);
+  const data = roiCtx.getImageData(0, 0, PATCH_SIZE, PATCH_SIZE).data;
+  const n = PATCH_SIZE * PATCH_SIZE;
+  const patch = new Float32Array(n);
+  for (let i = 0, p = 0; i < n; i++, p += 4) {
+    patch[i] = 0.2 * data[p] + 0.72 * data[p + 1] + 0.08 * data[p + 2];
+  }
+  return patch;
+}
+
+function seekVideoTo(targetTime) {
+  return new Promise(resolve => {
+    const clamped = Math.max(0, Math.min(video.duration - 0.005, targetTime));
+    if (Math.abs(video.currentTime - clamped) < 0.002 && video.readyState >= 2) {
+      resolve();
+      return;
+    }
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      video.removeEventListener("seeked", finish);
+      clearTimeout(timer);
+      // Dekoderin tuvale kareyi çizmesi için 1 frame bekle
+      requestAnimationFrame(() => resolve());
+    };
+    const timer = setTimeout(finish, 350);
+    video.addEventListener("seeked", finish, { once: true });
+    video.currentTime = clamped;
+  });
+}
+
+$("analyzeBtn").onclick = async () => {
+  if (!videoReady || (!savedInitHeart && !heartBox)) return;
+  stopAll();
+  clearResults();
+
+  const startSec = Math.max(0, parseFloat($("startSec").value) || 0);
+  const endSec = Math.min(video.duration, parseFloat($("endSec").value) || video.duration);
+  if (endSec - startSec < 1.2) {
+    setStatus("Analiz aralığı en az 1.2 saniye olmalı.", "#f87171");
+    return;
+  }
+
+  const fps = parseFloat($("targetFps").value) || 30;
+  const dt = 1 / fps;
+  const totalSteps = Math.floor((endSec - startSec) / dt) + 1;
+
+  const initBody = savedInitBody ? { ...savedInitBody, angle: 0 } : (bodyBox ? { ...bodyBox, angle: 0 } : null);
+  const initHeart = savedInitHeart ? { ...savedInitHeart, angle: 0 } : { ...heartBox, angle: 0 };
+  const useTracking = $("trackToggle").checked && !!initBody;
+  const localHX = initBody ? initHeart.cx - initBody.cx : 0;
+  const localHY = initBody ? initHeart.cy - initBody.cy : 0;
+
+  mode = "analyzing";
+  invertSign = false;
+  updateButtons();
+  $("progressWrap").style.display = "block";
+  $("progressBar").style.width = "0%";
+  setStatus(`Kare kare analiz çalışıyor (${totalSteps} kare)...`);
+
+  await seekVideoTo(startSec);
+  if (mode !== "analyzing") return;
+
+  bodyBox = initBody ? { ...initBody } : null;
+  heartBox = { ...initHeart };
+  const tracker = useTracking ? new HighResRigidTracker(bodyBox) : null;
+  let lostStreak = 0;
+
+  for (let i = 0; i < totalSteps; i++) {
+    if (mode !== "analyzing") break;
+    const targetT = startSec + i * dt;
+    if (i > 0) {
+      await seekVideoTo(targetT);
+      if (mode !== "analyzing") break;
+    }
+
+    const actualT = video.currentTime;
+    if (samples.length && actualT <= samples[samples.length - 1].t + 0.001) continue;
+
+    if (tracker && i > 0) {
+      trackTotal++;
+      const res = tracker.update(lostStreak);
+      if (res.ok) {
+        trackGood++;
+        lostStreak = 0;
+        bodyBox = { cx: res.cx, cy: res.cy, w: initBody.w, h: initBody.h, angle: res.angle };
+        const c = Math.cos(res.angle), s = Math.sin(res.angle);
+        heartBox = {
+          cx: res.cx + localHX * c - localHY * s,
+          cy: res.cy + localHX * s + localHY * c,
+          w: initHeart.w,
+          h: initHeart.h,
+          angle: res.angle
+        };
+      } else {
+        lostStreak++;
+        if (lostStreak >= 18) {
+          setStatus("Sahne kesmesi veya aşırı hareket algılandı; analiz bu noktada tamamlandı.", "#fbbf24");
+          break;
+        }
+      }
+    }
+
+    const patch = readHeartGreenPatch(heartBox);
+    samples.push({
+      t: actualT,
+      patch,
+      body: bodyBox ? { ...bodyBox } : null,
+      heart: { ...heartBox }
+    });
+
+    if (i % 2 === 0 || i === totalSteps - 1) {
+      const pct = Math.round(((i + 1) / totalSteps) * 100);
+      $("progressBar").style.width = `${pct}%`;
+      $("framesText").textContent = `${samples.length} kare`;
+      updateTimeUI();
+      drawFrameAndOverlays();
+    }
+  }
+
+  $("progressWrap").style.display = "none";
+  mode = "idle";
+  updateButtons();
+
+  if (samples.length < 25) {
+    setStatus("Yeterli benzersiz kare toplanamadı (en az 25 kare gerekli).", "#f87171");
+    return;
+  }
+
+  recomputeAndRender();
+};
+
+// ---------- 6. Çift Sayım Korumalı Temel Frekans (F0) Motoru ----------
+function movingAverage(arr, radius) {
+  const n = arr.length;
+  const out = new Float64Array(n);
+  let sum = 0, cnt = 0;
+  for (let i = 0; i <= Math.min(radius, n - 1); i++) { sum += arr[i]; cnt++; }
+  for (let i = 0; i < n; i++) {
+    out[i] = sum / cnt;
+    const add = i + radius + 1;
+    const rem = i - radius;
+    if (add < n) { sum += arr[add]; cnt++; }
+    if (rem >= 0) { sum -= arr[rem]; cnt--; }
+  }
+  return out;
+}
+
+function applyBiquadFiltFilt(sig, fs, fc, type) {
+  const safeFc = Math.max(0.015 * fs, Math.min(0.45 * fs, fc));
+  const w0 = 2 * Math.PI * safeFc / fs;
+  const cosW = Math.cos(w0);
+  const alpha = Math.sin(w0) / Math.SQRT2;
+  let b0, b1, b2;
+  if (type === "lowpass") {
+    b0 = (1 - cosW) / 2; b1 = 1 - cosW; b2 = b0;
+  } else {
+    b0 = (1 + cosW) / 2; b1 = -(1 + cosW); b2 = b0;
+  }
+  const a0 = 1 + alpha, a1 = -2 * cosW, a2 = 1 - alpha;
+  b0 /= a0; b1 /= a0; b2 /= a0;
+  const na1 = a1 / a0, na2 = a2 / a0;
+
+  const pass = inp => {
+    const out = new Float64Array(inp.length);
+    let x1 = inp[0], x2 = inp[0], y1 = inp[0], y2 = inp[0];
+    for (let i = 0; i < inp.length; i++) {
+      const x0 = inp[i];
+      const y0 = b0 * x0 + b1 * x1 + b2 * x2 - na1 * y1 - na2 * y2;
+      out[i] = y0;
+      x2 = x1; x1 = x0; y2 = y1; y1 = y0;
+    }
+    return out;
+  };
+  const fwd = pass(sig);
+  fwd.reverse();
+  const bwd = pass(fwd);
+  bwd.reverse();
+  return bwd;
+}
+
+function computeSpectrum(sig, fs, minHz, maxHz) {
+  const n = sig.length;
+  const stepHz = 0.025;
+  const freqs = [], powers = [];
+  let bestIdx = 0, bestPower = -1, totalPower = 0;
+
+  for (let f = minHz; f <= maxHz; f += stepHz) {
+    let re = 0, im = 0;
+    const wf = 2 * Math.PI * f / fs;
+    for (let i = 0; i < n; i++) {
+      const win = 0.5 - 0.5 * Math.cos((2 * Math.PI * i) / (n - 1));
+      const v = sig[i] * win;
+      const ang = wf * i;
+      re += v * Math.cos(ang);
+      im -= v * Math.sin(ang);
+    }
+    const p = re * re + im * im;
+    freqs.push(f);
+    powers.push(p);
+    totalPower += p;
+    if (p > bestPower) { bestPower = p; bestIdx = freqs.length - 1; }
+  }
+
+  let peakFreq = freqs[bestIdx];
+  if (bestIdx > 0 && bestIdx < powers.length - 1) {
+    const p1 = powers[bestIdx - 1], p2 = powers[bestIdx], p3 = powers[bestIdx + 1];
+    const denom = p1 - 2 * p2 + p3;
+    if (Math.abs(denom) > 1e-9) {
+      peakFreq += Math.max(-0.5, Math.min(0.5, 0.5 * (p1 - p3) / denom)) * stepHz;
+    }
+  }
+
+  // 2x Harmonik Koruması: peakFreq/2 aralığında güçlü temel tepe varsa 2x yerine gerçeği seç!
+  const halfF = peakFreq / 2;
+  if (halfF >= minHz + 0.1) {
+    let halfBestIdx = -1, halfBestP = -1;
+    for (let i = 0; i < freqs.length; i++) {
+      if (Math.abs(freqs[i] - halfF) <= halfF * 0.09 && powers[i] > halfBestP) {
+        halfBestP = powers[i];
+        halfBestIdx = i;
+      }
+    }
+    if (halfBestIdx !== -1 && halfBestP >= bestPower * 0.32) {
+      peakFreq = freqs[halfBestIdx];
+      bestPower = halfBestP;
+    }
+  }
+
+  const snr = bestPower / ((totalPower / powers.length) || 1);
+  return { peakFreq, snr, freqs, powers };
+}
+
+function bandPowerAt(freqs, powers, targetF) {
+  let maxP = 0, totalP = 0;
+  for (let i = 0; i < freqs.length; i++) {
+    totalP += powers[i];
+    if (Math.abs(freqs[i] - targetF) <= targetF * 0.12 && powers[i] > maxP) {
+      maxP = powers[i];
+    }
+  }
+  return maxP / ((totalP / freqs.length) || 1);
+}
+
+function extractCircularProbeSeries(gridSeries, T, cx, cy, rad = 2.6) {
+  const r2 = rad * rad;
+  const idxs = [];
+  for (let y = 0; y < PATCH_SIZE; y++) {
+    for (let x = 0; x < PATCH_SIZE; x++) {
+      if ((x - cx) * (x - cx) + (y - cy) * (y - cy) <= r2) {
+        idxs.push(y * PATCH_SIZE + x);
+      }
+    }
+  }
+  const out = new Float64Array(T);
+  const inv = 1 / (idxs.length || 1);
+  for (let t = 0; t < T; t++) {
+    let s = 0;
+    const base = t * PATCH_SIZE * PATCH_SIZE;
+    for (let k = 0; k < idxs.length; k++) s += gridSeries[base + idxs[k]];
+    out[t] = s * inv;
+  }
+  return out;
+}
+
+function localGainNormalize(sig, winRadius) {
+  const n = sig.length;
+  const sq = new Float64Array(n);
+  for (let i = 0; i < n; i++) sq[i] = sig[i] * sig[i];
+  const rmsSq = movingAverage(sq, winRadius);
+  const globalRms = Math.sqrt(sq.reduce((a, b) => a + b, 0) / n) || 1e-6;
+  const out = new Float64Array(n);
+  for (let i = 0; i < n; i++) {
+    const loc = Math.sqrt(rmsSq[i]);
+    const denom = Math.max(loc, globalRms * 0.40);
+    out[i] = sig[i] / denom;
+  }
+  return out;
+}
+
+function computeSignalAnalysis() {
+  const dts = [];
+  for (let i = 1; i < samples.length; i++) {
+    const d = samples[i].t - samples[i - 1].t;
+    if (d > 0.002 && d < 0.25) dts.push(d);
+  }
+  const dt = median(dts);
+  if (!dt) return { error: "Video zaman bilgisi okunamadı." };
+
+  const fs = 1 / dt;
+  const minHz = Math.max(1.2, (parseFloat($("minBpm").value) || 180) / 60);
+  const maxHz = Math.min((parseFloat($("maxBpm").value) || 520) / 60, fs * 0.45);
+  if (maxHz <= minHz) return { error: `Video FPS (${fs.toFixed(1)}) bu BPM aralığı için yetersiz.` };
+
+  const t0 = samples[0].t;
+  const tEnd = samples[samples.length - 1].t;
+  const T = Math.floor((tEnd - t0) / dt) + 1;
+  const P = PATCH_SIZE * PATCH_SIZE;
+  const gridSeries = new Float32Array(T * P);
+
+  let j = 0;
+  for (let ti = 0; ti < T; ti++) {
+    const t = t0 + ti * dt;
+    while (j < samples.length - 2 && samples[j + 1].t < t) j++;
+    const a = samples[j], b = samples[Math.min(j + 1, samples.length - 1)];
+    const frac = Math.max(0, Math.min(1, (t - a.t) / (b.t - a.t || 1)));
+    const off = ti * P;
+    for (let p = 0; p < P; p++) {
+      gridSeries[off + p] = a.patch[p] + (b.patch[p] - a.patch[p]) * frac;
+    }
+  }
+
+  const broadClean = s => {
+    let f = applyBiquadFiltFilt(s, fs, minHz * 0.88, "highpass");
+    f = applyBiquadFiltFilt(f, fs, Math.min(fs * 0.44, maxHz * 1.15), "lowpass");
+    return f;
+  };
+
+  let rawSig = null;
+  let trueFreq = 0;
+  let sourceLabel = "";
+
+  if (manualProbe) {
+    const s = extractCircularProbeSeries(gridSeries, T, manualProbe.x, manualProbe.y, 2.8);
+    rawSig = broadClean(s);
+    const sp = computeSpectrum(rawSig, fs, minHz, maxHz);
+    trueFreq = sp.peakFreq;
+    activeProbes = [manualProbe];
+    sourceLabel = "Elle Duvar Probu";
+  } else {
+    // 1. Adım: 25 probun hepsini tara ve ortak temel frekansı (F0) bul (kutu kaymasına duyarsız!)
+    const coords = [4, 8, 12, 16, 20];
+    const probes = [];
+    for (const cy of coords) {
+      for (const cx of coords) {
+        const s = extractCircularProbeSeries(gridSeries, T, cx, cy, 2.6);
+        const clean = broadClean(s);
+        const sp = computeSpectrum(clean, fs, minHz, maxHz);
+        probes.push({ x: cx, y: cy, sig: clean, spec: sp });
+      }
+    }
+
+    // En güçlü 8 probun normalize spektrumunu topla -> gerçek ortak kalp ritmi ortaya çıkar
+    probes.sort((a, b) => b.spec.snr - a.spec.snr);
+    const topForSpec = probes.slice(0, 8);
+    const numF = topForSpec[0].spec.freqs.length;
+    const aggPowers = new Float64Array(numF);
+    for (const p of topForSpec) {
+      const mx = Math.max(...p.spec.powers) || 1;
+      for (let i = 0; i < numF; i++) {
+        aggPowers[i] += (p.spec.powers[i] / mx) * p.spec.snr;
+      }
+    }
+
+    // Ortak spektrumda 2x korumalı temel tepeyi (F0) bul
+    const freqs = topForSpec[0].spec.freqs;
+    let bIdx = 0, bPow = -1;
+    for (let i = 0; i < numF; i++) {
+      if (aggPowers[i] > bPow) { bPow = aggPowers[i]; bIdx = i; }
+    }
+    trueFreq = freqs[bIdx];
+    const halfF = trueFreq / 2;
+    if (halfF >= minHz + 0.1) {
+      let hIdx = -1, hPow = -1;
+      for (let i = 0; i < numF; i++) {
+        if (Math.abs(freqs[i] - halfF) <= halfF * 0.09 && aggPowers[i] > hPow) {
+          hPow = aggPowers[i]; hIdx = i;
+        }
+      }
+      if (hIdx !== -1 && hPow >= bPow * 0.30) {
+        trueFreq = freqs[hIdx];
+      }
+    }
+
+    // 2. Adım: Sadece bu gerçek temel frekansta (F0) en net atan 6 probu birleştir
+    for (const p of probes) {
+      p.f0Score = bandPowerAt(p.spec.freqs, p.spec.powers, trueFreq);
+    }
+    probes.sort((a, b) => b.f0Score - a.f0Score);
+    const chosen = probes.slice(0, 6);
+    activeProbes = chosen.map(p => ({ x: p.x, y: p.y }));
+
+    const ref = chosen[0].sig;
+    rawSig = new Float64Array(T);
+    let wSum = 0;
+    for (const p of chosen) {
+      let dot = 0, n2 = 0;
+      for (let t = 0; t < T; t++) {
+        dot += ref[t] * p.sig[t];
+        n2 += p.sig[t] * p.sig[t];
+      }
+      const sign = dot >= 0 ? 1 : -1;
+      const norm = Math.sqrt(n2 / T) || 1;
+      const weight = Math.max(0.1, p.f0Score);
+      for (let t = 0; t < T; t++) rawSig[t] += sign * (p.sig[t] / norm) * weight;
+      wSum += weight;
+    }
+    for (let t = 0; t < T; t++) rawSig[t] /= wSum;
+    sourceLabel = "Temel Ritim Kilidi (6x)";
+  }
+
+  const finalSpec = computeSpectrum(rawSig, fs, minHz, maxHz);
+  if (!manualProbe) trueFreq = finalSpec.peakFreq;
+
+  // 3. Adım: Temel frekans (F0) etrafında sıfır-faz dar bant filtre -> 2x çift sayımı fiziksel olarak yok eder!
+  const lowCut = Math.max(minHz * 0.78, trueFreq * 0.62);
+  const highCut = Math.min(fs * 0.44, trueFreq * 1.48);
+  let filtered = applyBiquadFiltFilt(rawSig, fs, lowCut, "highpass");
+  filtered = applyBiquadFiltFilt(filtered, fs, highCut, "lowpass");
+
+  // Lokal kazanç normalizasyonu
+  const normRad = Math.max(4, Math.round(fs * 0.75));
+  let normSig = localGainNormalize(filtered, normRad);
+
+  let m3 = 0;
+  for (let i = 0; i < T; i++) m3 += normSig[i] * normSig[i] * normSig[i];
+  const autoFlip = m3 < 0 ? -1 : 1;
+  const finalFlip = autoFlip * (invertSign ? -1 : 1);
+  for (let i = 0; i < T; i++) normSig[i] *= finalFlip;
+
+  // 4. Adım: Temel periyoda kilitli tepe sayıcı (çift sayım imkansız!)
+  const sens = parseFloat($("sensSlider").value) || 0.28;
+  const expectedPeriod = fs / trueFreq;
+  const minDist = Math.max(2, Math.round(expectedPeriod * 0.65));
+
+  const peaks = [];
+  for (let i = 1; i < T - 1; i++) {
+    if (normSig[i] > normSig[i - 1] && normSig[i] >= normSig[i + 1] && normSig[i] > sens) {
+      if (!peaks.length || i - peaks[peaks.length - 1] >= minDist) {
+        peaks.push(i);
+      } else if (normSig[i] > normSig[peaks[peaks.length - 1]]) {
+        peaks[peaks.length - 1] = i;
+      }
+    }
+  }
+
+  // Odak anlık bulanıklaştıysa sadece tek boşlukları kurtar
+  const recovered = [...peaks];
+  for (let k = 0; k < recovered.length - 1; k++) {
+    const gap = recovered[k + 1] - recovered[k];
+    if (gap > expectedPeriod * 1.65 && gap < expectedPeriod * 2.40) {
+      const midL = Math.round(recovered[k] + expectedPeriod * 0.65);
+      const midR = Math.round(recovered[k + 1] - expectedPeriod * 0.65);
+      let bestI = -1, bestV = 0.12;
+      for (let idx = midL; idx <= midR; idx++) {
+        if (idx > 0 && idx < T - 1 && normSig[idx] > normSig[idx - 1] && normSig[idx] >= normSig[idx + 1] && normSig[idx] > bestV) {
+          bestV = normSig[idx];
+          bestI = idx;
+        }
+      }
+      if (bestI !== -1) recovered.splice(k + 1, 0, bestI);
+    }
+  }
+  // Kasılıp Gevşeme Oranı (Ham dalgadan gerçek asimetri hesabı)
+  const rawOriented = new Float64Array(T);
+  for (let i = 0; i < T; i++) rawOriented[i] = rawSig[i] * finalFlip;
+
+  const sysDurs = [], diaDurs = [];
+  for (let k = 1; k < recovered.length - 1; k++) {
+    const pPrev = recovered[k - 1], pCurr = recovered[k], pNext = recovered[k + 1];
+    let vLeft = pPrev, minL = Infinity;
+    for (let i = pPrev; i <= pCurr; i++) {
+      if (rawOriented[i] < minL) { minL = rawOriented[i]; vLeft = i; }
+    }
+    let vRight = pCurr, minR = Infinity;
+    for (let i = pCurr; i <= pNext; i++) {
+      if (rawOriented[i] < minR) { minR = rawOriented[i]; vRight = i; }
+    }
+    const sT = (pCurr - vLeft) * dt;
+    const dT = (vRight - pCurr) * dt;
+    if (sT > 0 && dT > 0) { sysDurs.push(sT); diaDurs.push(dT); }
+  }
+  const medSys = median(sysDurs);
+  const medDia = median(diaDurs);
+  const sdRatio = medDia > 0 ? medSys / medDia : 0;
+  const sysPct = (medSys + medDia) > 0 ? Math.round((medSys / (medSys + medDia)) * 100) : 0;
+
+return buildResultObject(normSig, recovered, t0, tEnd, dt, fs, { ...finalSpec, peakFreq: trueFreq }, sourceLabel, sdRatio, sysPct);}
+
+function buildResultObject(signal, peaks, t0, tEnd, dt, fs, spec, sourceLabel, sdRatio = 0, sysPct = 0) {
+  peaks.sort((a, b) => a - b);
+  const times = peaks.map(idx => t0 + idx * dt);
+  const ibis = [];
+  for (let i = 1; i < times.length; i++) ibis.push(times[i] - times[i - 1]);
+  const medianBpm = ibis.length ? 60 / median(ibis) : spec.peakFreq * 60;
+
+  return {
+    bpmSpectral: spec.peakFreq * 60,
+    bpmPeaks: medianBpm,
+    peakFreq: spec.peakFreq,
+    fs,
+    t0,
+    tEnd,
+    dt,
+    snr: spec.snr,
+    source: sourceLabel,
+    duration: tEnd - t0,
+    signal,
+    peaks,
+    times,
+    freqs: spec.freqs,
+    powers: spec.powers,
+    sdRatio,
+    sysPct
+  };
+}
+
+function recomputeAndRender() {
+  const res = computeSignalAnalysis();
+  if (res.error) {
+    setStatus(res.error, "#f87171");
+    return;
+  }
+  lastResult = res;
+  renderMetricsAndCharts();
+  drawFrameAndOverlays();
+  updateButtons();
+  setStatus(
+    `Analiz tamamlandı! ${Math.round(res.bpmSpectral)} BPM • ${res.times.length} atım (${res.duration.toFixed(2)} sn).`,
+    "#6ee7b7"
+  );
+}
+
+function renderMetricsAndCharts(cursorTime = null) {
+  const r = lastResult;
+  if (!r) return;
+
+  $("bpmSpectral").textContent = Math.round(r.bpmSpectral);
+  $("freqText").textContent = `${r.peakFreq.toFixed(2)} Hz (${r.source})`;
+  $("bpmPeaks").textContent = Math.round(r.bpmPeaks);
+  $("beats").textContent = r.times.length;
+  $("durationText").textContent = `Süre: ${r.duration.toFixed(2)} sn`;
+  $("fps").textContent = r.fs.toFixed(1);
+  $("framesText").textContent = `${samples.length} kare`;
+
+  const trackPct = trackTotal ? Math.round((trackGood / trackTotal) * 100) : 100;
+  $("trackScore").textContent = ($("trackToggle").checked && savedInitBody) ? `${trackPct}%` : "Sabit";
+  $("snrText").textContent = `SNR: ${r.snr.toFixed(1)}x`;
+  $("sdRatio").textContent = r.sdRatio ? r.sdRatio.toFixed(2) : "—";
+  $("sdSub").textContent = r.sysPct ? `%${r.sysPct} Kasılma / %${100 - r.sysPct} Gevşeme` : "Kasılma / Gevşeme";
+
+  // Otomatik Tutarlılık Rozeti
+  const countedBpm = r.duration > 0 ? (r.times.length / r.duration) * 60 : r.bpmPeaks;
+  const diffPct = Math.abs(r.bpmSpectral - r.bpmPeaks) / (r.bpmSpectral || 1) * 100;
+  const countDiffPct = Math.abs(r.bpmSpectral - countedBpm) / (r.bpmSpectral || 1) * 100;
+  const badge = $("consistencyBadge");
+
+  if (diffPct <= 6 && countDiffPct <= 10 && r.snr >= 3.0) {
+    badge.className = "badge badge-ok";
+    badge.textContent = "Ölçüm Tutarlı ✓";
+  } else {
+    badge.className = "badge badge-warn";
+    badge.textContent = "Kontrol Önerilir ⚠";
+  }
+
+  let note = `Sayılan ortalama: ${Math.round(countedBpm)} BPM • Spektral: ${Math.round(r.bpmSpectral)} BPM. `;
+  if (diffPct <= 6 && countDiffPct <= 10) {
+    note += "İki yöntem birebir örtüşüyor, sonuca güvenebilirsin.";
+  } else if (countedBpm < r.bpmSpectral * 0.90) {
+    note += "Bazı zayıf atımlar eksik kalmış olabilir; Atım Hassasiyeti sürgüsünü biraz sola (0.18–0.22) çek.";
+  } else {
+    note += "Gözle Doğrula'da sesli tik ile kontrol edip gerekirse hassasiyeti hafifçe artır.";
+  }
+  $("qualityNote").textContent = note;
+
+  $("events").innerHTML = r.times.length
+    ? r.times.map((t, i) => {
+        const diff = i > 0 ? ` (Δ ${(t - r.times[i - 1]).toFixed(3)}s → ${Math.round(60 / (t - r.times[i - 1]))} BPM)` : "";
+        return `${String(i + 1).padStart(2, "0")}. atım: ${t.toFixed(3)} sn${diff}`;
+      }).join("<br>")
+    : "Belirgin atım bulunamadı.";
+
+  drawFinalSignal(r.signal, r.peaks, r.t0, r.dt, cursorTime);
+  drawSpectrum(r.freqs, r.powers, r.peakFreq);
+}
+
+$("sensSlider").addEventListener("input", () => {
+  $("sensVal").textContent = parseFloat($("sensSlider").value).toFixed(2);
+  if (samples.length >= 25 && mode === "idle") recomputeAndRender();
+});
+
+$("invertBtn").onclick = () => {
+  invertSign = !invertSign;
+  if (samples.length >= 25 && mode === "idle") recomputeAndRender();
+};
+
+signalCanvas.addEventListener("click", e => {
+  if (!lastResult || mode !== "idle") return;
+  const rect = signalCanvas.getBoundingClientRect();
+  const frac = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+  const idx = Math.round(frac * (lastResult.signal.length - 1));
+  const clickT = lastResult.t0 + idx * lastResult.dt;
+
+  if ($("editBeatsToggle").checked) {
+    const tol = Math.max(2, Math.round(lastResult.fs * 0.08));
+    const nearIdx = lastResult.peaks.findIndex(p => Math.abs(p - idx) <= tol);
+    if (nearIdx !== -1) {
+      lastResult.peaks.splice(nearIdx, 1);
+    } else {
+      let bestI = idx;
+      for (let k = Math.max(1, idx - 3); k <= Math.min(lastResult.signal.length - 2, idx + 3); k++) {
+        if (lastResult.signal[k] > lastResult.signal[bestI]) bestI = k;
+      }
+      lastResult.peaks.push(bestI);
+    }
+    lastResult = buildResultObject(
+      lastResult.signal,
+      lastResult.peaks,
+      lastResult.t0,
+      lastResult.tEnd,
+      lastResult.dt,
+      lastResult.fs,
+      { peakFreq: lastResult.peakFreq, snr: lastResult.snr, freqs: lastResult.freqs, powers: lastResult.powers },
+      lastResult.source
+    );
+    renderMetricsAndCharts(clickT);
+  } else {
+    video.currentTime = clickT;
+    renderMetricsAndCharts(clickT);
+  }
+});
+
+// ---------- 7. Gözle Doğrulama (Flaş + Sesli Tik) ----------
+$("verifyBtn").onclick = async () => {
+  if (!lastResult || !samples.length) return;
+  stopAll();
+  mode = "verifying";
+  updateButtons();
+  $("verifyHud").style.display = "block";
+
+  const speed = parseFloat($("verifySpeed").value) || 0.25;
+  const startT = lastResult.t0;
+  const endT = lastResult.tEnd;
+
+  await seekVideoTo(startT);
+  if (mode !== "verifying") return;
+
+  video.playbackRate = speed;
+  let lastTickedIdx = -1;
+  setStatus(`Doğrulama oynatılıyor (${speed}x)... Her kalp atışında sarı flaş ve "tik" sesinin eşleştiğini dinle.`, "#c084fc");
+
+  const tick = () => {
+    if (mode !== "verifying") return;
+    const t = video.currentTime;
+
+    let lo = 0, hi = samples.length - 1;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (samples[mid].t < t) lo = mid + 1;
+      else hi = mid;
+    }
+    const s = samples[lo];
+    if (s) {
+      if (s.body) bodyBox = { ...s.body };
+      if (s.heart) heartBox = { ...s.heart };
+    }
+
+    let passed = 0;
+    let isFlash = false;
+    const flashWin = 0.055;
+    for (let i = 0; i < lastResult.times.length; i++) {
+      const bt = lastResult.times[i];
+      if (bt <= t + 0.015) {
+        passed++;
+        if (i > lastTickedIdx) {
+          lastTickedIdx = i;
+          playTick();
+        }
+      }
+      if (Math.abs(t - bt) <= flashWin) isFlash = true;
+    }
+
+    $("verifyHud").textContent = `ATIM: ${passed} / ${lastResult.times.length}  (${t.toFixed(2)}s)`;
+    heartZoom.classList.toggle("flash", isFlash);
+    updateTimeUI();
+    drawFrameAndOverlays(isFlash);
+    drawFinalSignal(lastResult.signal, lastResult.peaks, lastResult.t0, lastResult.dt, t);
+
+    if (video.ended || t >= endT - 0.02) {
+      stopAll();
+      setStatus("Doğrulama tamamlandı.", "#6ee7b7");
+      return;
+    }
+    verifyRaf = requestAnimationFrame(tick);
+  };
+
+  video.play().then(() => {
+    verifyRaf = requestAnimationFrame(tick);
+  }).catch(() => {
+    stopAll();
+    setStatus("Video oynatılamadı.", "#f87171");
+  });
+};
+
+$("stopBtn").onclick = () => {
+  stopAll();
+  setStatus("İşlem durduruldu.");
+};
+
+function stopAll() {
+  mode = "idle";
+  if (verifyRaf !== null) cancelAnimationFrame(verifyRaf);
+  verifyRaf = null;
+  video.pause();
+  $("verifyHud").style.display = "none";
+  $("progressWrap").style.display = "none";
+  heartZoom.classList.remove("flash");
+  updateButtons();
+}
+
+// ---------- 8. Grafikler ----------
+function drawFinalSignal(sig, peaks, t0, dt, cursorTime = null) {
+  const w = signalCanvas.width, h = signalCanvas.height;
+  sCtx.clearRect(0, 0, w, h);
+  let min = Infinity, max = -Infinity;
+  for (let i = 0; i < sig.length; i++) {
+    if (sig[i] < min) min = sig[i];
+    if (sig[i] > max) max = sig[i];
+  }
+  const rng = max - min || 1;
+
+  sCtx.strokeStyle = "#1e293b";
+  sCtx.lineWidth = 1;
+  for (let k = 1; k < 4; k++) {
+    const y = (k * h) / 4;
+    sCtx.beginPath(); sCtx.moveTo(0, y); sCtx.lineTo(w, y); sCtx.stroke();
+  }
+
+  const sens = parseFloat($("sensSlider").value) || 0.28;
+  const ty = h - 16 - ((sens - min) / rng) * (h - 32);
+  if (ty > 4 && ty < h - 4) {
+    sCtx.strokeStyle = "rgba(245, 158, 11, 0.45)";
+    sCtx.setLineDash([4, 4]);
+    sCtx.beginPath(); sCtx.moveTo(0, ty); sCtx.lineTo(w, ty); sCtx.stroke();
+    sCtx.setLineDash([]);
+  }
+
+  sCtx.strokeStyle = "#10b981";
+  sCtx.lineWidth = 2;
+  sCtx.beginPath();
+  for (let i = 0; i < sig.length; i++) {
+    const x = (i / (sig.length - 1)) * w;
+    const y = h - 16 - ((sig[i] - min) / rng) * (h - 32);
+    i === 0 ? sCtx.moveTo(x, y) : sCtx.lineTo(x, y);
+  }
+  sCtx.stroke();
+
+  sCtx.fillStyle = "#f43f5e";
+  peaks.forEach(idx => {
+    const x = (idx / (sig.length - 1)) * w;
+    const y = h - 16 - ((sig[idx] - min) / rng) * (h - 32);
+    sCtx.beginPath();
+    sCtx.arc(x, y, 3.6, 0, Math.PI * 2);
+    sCtx.fill();
+  });
+
+  if (cursorTime !== null) {
+    const totalDur = (sig.length - 1) * dt || 1;
+    const cx = Math.max(0, Math.min(w, ((cursorTime - t0) / totalDur) * w));
+    sCtx.strokeStyle = "#fde047";
+    sCtx.lineWidth = 2;
+    sCtx.beginPath(); sCtx.moveTo(cx, 0); sCtx.lineTo(cx, h); sCtx.stroke();
+  }
+}
+
+function drawSpectrum(freqs, powers, peakFreq) {
+  const w = spectrumCanvas.width, h = spectrumCanvas.height;
+  fCtx.clearRect(0, 0, w, h);
+  const maxP = Math.max(...powers) || 1;
+  const fMin = freqs[0], fMax = freqs[freqs.length - 1];
+
+  fCtx.fillStyle = "rgba(59,130,246,0.22)";
+  fCtx.strokeStyle = "#3b82f6";
+  fCtx.lineWidth = 2;
+  fCtx.beginPath();
+  freqs.forEach((f, i) => {
+    const x = ((f - fMin) / (fMax - fMin || 1)) * w;
+    const y = h - 22 - (powers[i] / maxP) * (h - 36);
+    i === 0 ? fCtx.moveTo(x, y) : fCtx.lineTo(x, y);
+  });
+  fCtx.stroke();
+  fCtx.lineTo(w, h - 22);
+  fCtx.lineTo(0, h - 22);
+  fCtx.closePath();
+  fCtx.fill();
+
+  const px = ((peakFreq - fMin) / (fMax - fMin || 1)) * w;
+  fCtx.strokeStyle = "#f43f5e";
+  fCtx.setLineDash([4, 3]);
+  fCtx.beginPath(); fCtx.moveTo(px, 8); fCtx.lineTo(px, h - 22); fCtx.stroke();
+  fCtx.setLineDash([]);
+
+  fCtx.fillStyle = "#94a3b8";
+  fCtx.font = "11px sans-serif";
+  fCtx.fillText(`${Math.round(fMin * 60)} BPM`, 6, h - 6);
+  fCtx.fillText(`${Math.round(fMax * 60)} BPM`, w - 58, h - 6);
+  fCtx.fillStyle = "#f43f5e";
+  fCtx.fillText(`${Math.round(peakFreq * 60)} BPM`, Math.min(w - 56, Math.max(6, px + 4)), 18);
+}
+
+// ---------- 9. CSV & Sıfırlama ----------
+$("exportBtn").onclick = () => {
+  if (!lastResult) return;
+  const r = lastResult;
+
+  const now = new Date();
+  const pad = n => String(n).padStart(2, "0");
+  const tarih = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  const saat = `${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+  const saatGosterim = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
+  // \uFEFF (UTF-8 BOM) sayesinde Excel Türkçe karakterleri bozmadan doğrudan açar
+  let csv = "\uFEFF";
+  csv += `Olcum_Tarihi,${tarih}\n`;
+  csv += `Olcum_Saati,${saatGosterim}\n`;
+  csv += `Ozet_Spektral_BPM,${r.bpmSpectral.toFixed(2)}\n`;
+  csv += `Ozet_Medyan_BPM,${r.bpmPeaks.toFixed(2)}\n`;
+  csv += `Toplam_Atim,${r.times.length}\n`;
+  csv += `Sure_sn,${r.duration.toFixed(3)}\n`;
+  csv += `Islenen_FPS,${r.fs.toFixed(2)}\n`;
+  csv += `Kasilma_Gevseme_Orani_SD,${r.sdRatio ? r.sdRatio.toFixed(2) : ""}\n`;
+  csv += `Kasilma_Yuzdesi,${r.sysPct ? "%" + r.sysPct : ""}\n`;
+  csv += `Gevseme_Yuzdesi,${r.sysPct ? "%" + (100 - r.sysPct) : ""}\n\n`;
+
+  csv += "Atim_No,Zaman_sn,Anlik_BPM\n";
+  r.times.forEach((t, i) => {
+    const inst = i > 0 ? (60 / (t - r.times[i - 1])).toFixed(1) : "";
+    csv += `${i + 1},${t.toFixed(4)},${inst}\n`;
+  });
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `daphnia_olcum_${tarih}_${saat}.csv`;
+  a.click();
+};
+
+function clearResults() {
+  samples = [];
+  trackGood = 0;
+  trackTotal = 0;
+  activeProbes = [];
+  lastResult = null;
+  $("bpmSpectral").textContent = "—";
+  $("bpmPeaks").textContent = "—";
+  $("beats").textContent = "—";
+  $("fps").textContent = "—";
+  $("trackScore").textContent = "—";
+  $("freqText").textContent = "BPM";
+  $("durationText").textContent = "Süre: —";
+  $("framesText").textContent = "0 kare";
+  $("snrText").textContent = "SNR: —";
+  $("qualityNote").textContent = "";
+  $("consistencyBadge").className = "badge";
+  $("consistencyBadge").textContent = "Henüz ölçülmedi";
+  $("events").textContent = "Henüz analiz yapılmadı.";
+  sCtx.clearRect(0, 0, signalCanvas.width, signalCanvas.height);
+  fCtx.clearRect(0, 0, spectrumCanvas.width, spectrumCanvas.height);
+  updateButtons();
+}
+
+$("resetBtn").onclick = () => {
+  stopAll();
+  bodyBox = null;
+  heartBox = null;
+  savedInitBody = null;
+  savedInitHeart = null;
+  manualProbe = null;
+  selectMode = null;
+  $("probeModeText").textContent = "Otomatik";
+  clearResults();
+  hzCtx.clearRect(0, 0, heartZoom.width, heartZoom.height);
+  $("angleText").textContent = "0°";
+  drawFrameAndOverlays();
+  updateButtons();
+  setStatus("Sıfırlandı. Yeni seçim yapabilir veya başka video yükleyebilirsin.");
+};
+</script>
+</body>
+</html>
